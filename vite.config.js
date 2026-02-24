@@ -56,6 +56,8 @@ function apiDevPlugin() {
             handlerPath = path.resolve(__dirname, 'api/room/message.js')
           } else if (url.pathname === '/api/room/delete-message') {
             handlerPath = path.resolve(__dirname, 'api/room/delete-message.js')
+          } else if (url.pathname === '/api/room/delete') {
+            handlerPath = path.resolve(__dirname, 'api/room/delete.js')
           } else if (url.pathname === '/api/upload/token') {
             handlerPath = path.resolve(__dirname, 'api/upload/token.js')
           } else if (url.pathname.match(/^\/api\/room\/([A-Za-z0-9]+)$/)) {

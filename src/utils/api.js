@@ -58,6 +58,16 @@ export const deleteMessage = async (roomId, messageId) => {
     return res.json();
 };
 
+// 删除房间
+export const deleteRoom = async (roomId) => {
+    const res = await fetch(`${API_BASE}/room/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId }),
+    });
+    return res.json();
+};
+
 // ===== 七牛云上传 =====
 
 // 通过后端代理获取七牛上传凭证（避免 CORS 跨域问题）

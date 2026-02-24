@@ -2,9 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
     getRoomData, sendTextMessage, sendFileMessage,
-    deleteMessage, uploadFile
+    deleteMessage, deleteRoom, uploadFile
 } from '../utils/api'
 import MessageItem from '../components/MessageItem'
+
+const ROOM_ID_KEY = 'nexus_room_id'
 
 function RoomPage() {
     const { roomId } = useParams()
@@ -18,6 +20,8 @@ function RoomPage() {
     const [error, setError] = useState('')
     const [roomNotFound, setRoomNotFound] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const messagesEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
@@ -124,6 +128,26 @@ function RoomPage() {
         }
     }
 
+    // 删除通道
+    const handleDeleteRoom = async () => {
+        setDeleting(true)
+        try {
+            const data = await deleteRoom(roomId)
+            if (data.error) {
+                setError(data.error)
+            } else {
+                // 清除本地存储的房间号
+                localStorage.removeItem(ROOM_ID_KEY)
+                navigate('/')
+            }
+        } catch {
+            setError('删除失败')
+        } finally {
+            setDeleting(false)
+            setShowDeleteConfirm(false)
+        }
+    }
+
     const handleCopyLink = async () => {
         const link = `${window.location.origin}/${roomId}`
         try {
@@ -138,6 +162,12 @@ function RoomPage() {
         }
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
+    }
+
+    // 退出通道（仅清除本地记录）
+    const handleExit = () => {
+        localStorage.removeItem(ROOM_ID_KEY)
+        navigate('/')
     }
 
     if (roomNotFound) {
@@ -160,9 +190,9 @@ function RoomPage() {
             {/* 顶部导航 */}
             <header className="room-header">
                 <div className="header-left">
-                    <button className="btn-icon" onClick={() => navigate('/')} title="返回首页">
+                    <button className="btn-icon" onClick={handleExit} title="退出通道">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" />
+                            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1H3zm6.707 4.293a1 1 0 010 1.414L7.414 11H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" />
                         </svg>
                     </button>
                     <div className="header-room-info">
@@ -178,6 +208,13 @@ function RoomPage() {
                     >
                         {copied ? '已复制' : '复制链接'}
                     </button>
+                    <button
+                        className="btn btn-sm btn-delete"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        style={{ marginLeft: '8px', border: '1px solid #fecaca', color: '#dc2626' }}
+                    >
+                        删除通道
+                    </button>
                 </div>
             </header>
 
@@ -191,7 +228,7 @@ function RoomPage() {
                 ) : messages.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-icon">◌</div>
-                        <h3>https//fasong.xyz</h3>
+                        <h3>https://fasong.xyz</h3>
                         <p>其他设备接入相同房间即可查看</p>
                         <p>数据24小时后销毁</p>
                     </div>
@@ -220,6 +257,35 @@ function RoomPage() {
                 <div className="toast toast-error" style={{ bottom: '100px' }}>
                     <span>{error}</span>
                     <button className="toast-close" onClick={() => setError('')}>×</button>
+                </div>
+            )}
+
+            {/* 删除确认弹窗 */}
+            {showDeleteConfirm && (
+                <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>确认删除</h3>
+                        <p>确定要删除此通道吗？</p>
+                        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px' }}>
+                            删除后所有数据将被清除且无法恢复
+                        </p>
+                        <div className="modal-actions">
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={deleting}
+                            >
+                                取消
+                            </button>
+                            <button 
+                                className="btn btn-danger" 
+                                onClick={handleDeleteRoom}
+                                disabled={deleting}
+                            >
+                                {deleting ? '删除中...' : '确认删除'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

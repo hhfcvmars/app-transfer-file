@@ -1,12 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createRoom } from '../utils/api'
+
+const ROOM_ID_KEY = 'nexus_room_id'
 
 function HomePage() {
     const navigate = useNavigate()
     const [joinRoomId, setJoinRoomId] = useState('')
     const [creating, setCreating] = useState(false)
     const [error, setError] = useState('')
+
+    // 检查是否有已创建的房间，自动跳转
+    useEffect(() => {
+        const savedRoomId = localStorage.getItem(ROOM_ID_KEY)
+        if (savedRoomId) {
+            navigate(`/${savedRoomId}`)
+        }
+    }, [navigate])
 
     const handleCreate = async () => {
         setError('')
@@ -16,6 +26,8 @@ function HomePage() {
             if (data.error) {
                 setError(data.error)
             } else {
+                // 保存房间号到 localStorage
+                localStorage.setItem(ROOM_ID_KEY, data.roomId)
                 navigate(`/${data.roomId}`)
             }
         } catch {
