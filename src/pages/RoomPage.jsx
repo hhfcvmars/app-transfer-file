@@ -193,6 +193,7 @@ function RoomPage() {
                         <div className="empty-icon">◌</div>
                         <h3>https//fasong.xyz</h3>
                         <p>其他设备接入相同房间即可查看</p>
+                        <p>数据24小时后销毁</p>
                     </div>
                 ) : (
                     <div className="messages-list">
