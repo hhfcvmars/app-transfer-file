@@ -206,7 +206,7 @@ function RoomPage() {
                         onClick={handleCopyLink}
                         style={copied ? { background: '#dcfce7', borderColor: '#86efac', color: '#16a34a' } : {}}
                     >
-                        {copied ? '已复制' : '复制链接'}
+                        {copied ? '已复制' : '复制房间链接'}
                     </button>
                     <button
                         className="btn btn-sm btn-delete"
@@ -270,15 +270,15 @@ function RoomPage() {
                             删除后所有数据将被清除且无法恢复
                         </p>
                         <div className="modal-actions">
-                            <button 
-                                className="btn btn-secondary" 
+                            <button
+                                className="btn btn-secondary"
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={deleting}
                             >
                                 取消
                             </button>
-                            <button 
-                                className="btn btn-danger" 
+                            <button
+                                className="btn btn-danger"
                                 onClick={handleDeleteRoom}
                                 disabled={deleting}
                             >
