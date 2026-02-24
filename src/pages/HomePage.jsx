@@ -25,6 +25,9 @@ function HomePage() {
         }
     }
 
+    // 验证十六进制字符
+    const isValidHex = (str) => /^[0-9A-Fa-f]+$/.test(str)
+
     const handleJoin = (e) => {
         e.preventDefault()
         setError('')
@@ -37,6 +40,10 @@ function HomePage() {
             setError('房间号为4位字符')
             return
         }
+        if (!isValidHex(id)) {
+            setError('房间号只能包含 0-9 和 A-F')
+            return
+        }
         navigate(`/room/${id}`)
     }
 
@@ -45,7 +52,7 @@ function HomePage() {
             <div className="home-content">
                 {/* 品牌标题 */}
                 <header className="brand-header">
-                    <h1 className="brand-title">Nexus</h1>
+                    <h1 className="brand-title">Fasong.xyz</h1>
                     <p className="brand-subtitle">简单、即时的文件传输</p>
                 </header>
 
@@ -66,7 +73,7 @@ function HomePage() {
                             <span className="btn-content">
                                 <span>创建传输房间</span>
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                    <path d="M8 3a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 3z"/>
+                                    <path d="M8 3a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 3z" />
                                 </svg>
                             </span>
                         )}
@@ -84,9 +91,13 @@ function HomePage() {
                         <input
                             type="text"
                             className="join-input"
-                            placeholder="输入4位房间号"
+                            placeholder="输入4位十六进制编号 (0-9 A-F)"
                             value={joinRoomId}
-                            onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                            onChange={(e) => {
+                                // 只允许输入十六进制字符
+                                const value = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '')
+                                setJoinRoomId(value)
+                            }}
                             maxLength={4}
                         />
                         <button
@@ -108,7 +119,7 @@ function HomePage() {
 
                 {/* 底部说明 */}
                 <footer className="home-footer">
-                    <p>无需注册 · 端到端加密 · 24小时后自动删除</p>
+                    <p>4位十六进制编号 · 24小时自动删除 · 无需注册</p>
                 </footer>
             </div>
         </div>

@@ -17,15 +17,9 @@ export const getRedis = () => {
   return redis;
 };
 
-// 生成4位房间号（去掉容易混淆的字符 O/0/I/1/L）
+// 生成4位房间号（十六进制格式：0-9, A-F）
 export const generateRoomId = () => {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  let result = '';
-  const bytes = crypto.randomBytes(4);
-  for (let i = 0; i < 4; i++) {
-    result += chars.charAt(bytes[i] % chars.length);
-  }
-  return result;
+  return crypto.randomBytes(2).toString('hex').toUpperCase();
 };
 
 // 生成消息ID（兼容 Vercel 环境）
