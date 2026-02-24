@@ -16,7 +16,7 @@ function HomePage() {
             if (data.error) {
                 setError(data.error)
             } else {
-                navigate(`/room/${data.roomId}`)
+                navigate(`/${data.roomId}`)
             }
         } catch {
             setError('网络错误，请检查连接后重试')
@@ -25,8 +25,13 @@ function HomePage() {
         }
     }
 
-    // 验证十六进制字符
-    const isValidHex = (str) => /^[0-9A-Fa-f]+$/.test(str)
+    // 验证房间号格式：前3位数字，第4位A-F字母
+    const isValidRoomId = (str) => {
+        if (str.length !== 4) return false
+        const digits = str.substring(0, 3)
+        const letter = str.substring(3, 4)
+        return /^[0-9]{3}$/.test(digits) && /^[A-F]$/.test(letter)
+    }
 
     const handleJoin = (e) => {
         e.preventDefault()
@@ -40,11 +45,11 @@ function HomePage() {
             setError('房间号为4位字符')
             return
         }
-        if (!isValidHex(id)) {
-            setError('房间号只能包含 0-9 和 A-F')
+        if (!isValidRoomId(id)) {
+            setError('房间号格式：3位数字 + 1位字母(A-F)')
             return
         }
-        navigate(`/room/${id}`)
+        navigate(`/${id}`)
     }
 
     return (
@@ -91,11 +96,27 @@ function HomePage() {
                         <input
                             type="text"
                             className="join-input"
-                            placeholder="输入4位十六进制编号 (0-9 A-F)"
+                            placeholder="输入房间号 (如: 123A)"
                             value={joinRoomId}
                             onChange={(e) => {
-                                // 只允许输入十六进制字符
-                                const value = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '')
+                                const input = e.target.value.toUpperCase()
+                                let value = ''
+                                
+                                // 根据位置限制字符类型
+                                for (let i = 0; i < input.length && i < 4; i++) {
+                                    const char = input[i]
+                                    if (i < 3) {
+                                        // 前3位只能是数字
+                                        if (/[0-9]/.test(char)) {
+                                            value += char
+                                        }
+                                    } else {
+                                        // 第4位只能是A-F
+                                        if (/[A-F]/.test(char)) {
+                                            value += char
+                                        }
+                                    }
+                                }
                                 setJoinRoomId(value)
                             }}
                             maxLength={4}
@@ -119,7 +140,7 @@ function HomePage() {
 
                 {/* 底部说明 */}
                 <footer className="home-footer">
-                    <p>4位十六进制编号 · 24小时自动删除 · 无需注册</p>
+                    <p>格式: 3位数字 + 1位字母(A-F) · 24小时自动删除</p>
                 </footer>
             </div>
         </div>

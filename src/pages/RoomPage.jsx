@@ -125,7 +125,7 @@ function RoomPage() {
     }
 
     const handleCopyLink = async () => {
-        const link = `${window.location.origin}/room/${roomId}`
+        const link = `${window.location.origin}/${roomId}`
         try {
             await navigator.clipboard.writeText(link)
         } catch {
@@ -191,8 +191,8 @@ function RoomPage() {
                 ) : messages.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-icon">◌</div>
-                        <h3>暂无内容</h3>
-                        <p>在下方输入文本或上传文件<br />其他设备接入相同房间即可查看</p>
+                        <h3>https//fasong.xyz</h3>
+                        <p>其他设备接入相同房间即可查看</p>
                     </div>
                 ) : (
                     <div className="messages-list">
