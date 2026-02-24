@@ -5,10 +5,14 @@ import { Redis } from '@upstash/redis';
 let redis;
 export const getRedis = () => {
   if (!redis) {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    
+    if (!url || !token) {
+      throw new Error('Redis 环境变量未设置: UPSTASH_REDIS_REST_URL 或 UPSTASH_REDIS_REST_TOKEN');
+    }
+    
+    redis = new Redis({ url, token });
   }
   return redis;
 };
@@ -22,6 +26,13 @@ export const generateRoomId = () => {
     result += chars.charAt(bytes[i] % chars.length);
   }
   return result;
+};
+
+// 生成消息ID（兼容 Vercel 环境）
+export const generateMessageId = () => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 10);
+  return `${timestamp}-${random}`;
 };
 
 // KV key

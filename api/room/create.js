@@ -33,6 +33,6 @@ export default async function handler(req, res) {
         return res.status(200).json({ roomId });
     } catch (err) {
         console.error('创建房间失败:', err);
-        return res.status(500).json({ error: '服务器错误' });
+        return res.status(500).json({ error: '服务器错误: ' + err.message });
     }
 }

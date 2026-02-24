@@ -15,28 +15,27 @@ const getFileType = (fileName) => {
 // 文件图标
 const getFileIcon = (fileName) => {
     const type = getFileType(fileName)
-    if (type === 'image') return '◈'
-    if (type === 'video') return '◉'
-    if (type === 'audio') return '◌'
-    if (type === 'pdf') return '◊'
-    if (!fileName) return '◎'
+    if (type === 'image') return '🖼️'
+    if (type === 'video') return '🎬'
+    if (type === 'audio') return '🎵'
+    if (type === 'pdf') return '📄'
+    if (!fileName) return '📄'
     const ext = fileName.split('.').pop()?.toLowerCase()
     const iconMap = {
-        doc: '◊', docx: '◊', xls: '◊', xlsx: '◊',
-        ppt: '◊', pptx: '◊', zip: '◆', rar: '◆', '7z': '◆',
-        txt: '◌', json: '◈', csv: '◈', md: '◌',
-        js: '◉', ts: '◉', py: '◉', java: '◉', html: '◉', css: '◉',
-        apk: '◊', ipa: '◊', exe: '◎', dmg: '◎',
+        doc: '📝', docx: '📝', xls: '📊', xlsx: '📊',
+        ppt: '📊', pptx: '📊', zip: '📦', rar: '📦', '7z': '📦',
+        txt: '📝', json: '📝', csv: '📝', md: '📝',
+        js: '💻', ts: '💻', py: '💻', java: '💻', html: '💻', css: '💻',
+        apk: '📱', ipa: '📱', exe: '⚙️', dmg: '⚙️',
     }
-    return iconMap[ext] || '◎'
+    return iconMap[ext] || '📄'
 }
 
-function MessageItem({ message, onDelete, index = 0 }) {
+function MessageItem({ message, onDelete }) {
     const [copying, setCopying] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [previewOpen, setPreviewOpen] = useState(false)
 
-    // 复制文本
     const handleCopy = async (text) => {
         try {
             await navigator.clipboard.writeText(text)
@@ -52,7 +51,6 @@ function MessageItem({ message, onDelete, index = 0 }) {
         setTimeout(() => setCopying(false), 1500)
     }
 
-    // 下载文件
     const handleDownload = async (e) => {
         e.preventDefault()
         try {
@@ -71,7 +69,6 @@ function MessageItem({ message, onDelete, index = 0 }) {
         }
     }
 
-    // 删除消息
     const handleDelete = async () => {
         if (deleting) return
         setDeleting(true)
@@ -79,16 +76,10 @@ function MessageItem({ message, onDelete, index = 0 }) {
         setDeleting(false)
     }
 
-    // 动画延迟
-    const animationDelay = `${index * 0.05}s`
-
-    // ===== 文本消息 =====
+    // 文本消息
     if (message.type === 'text') {
         return (
-            <div 
-                className="msg-card msg-text-card" 
-                style={{ animationDelay }}
-            >
+            <div className="msg-card msg-text-card">
                 <div className="msg-text-body">
                     <pre className="msg-text-content">{message.content}</pre>
                 </div>
@@ -100,22 +91,7 @@ function MessageItem({ message, onDelete, index = 0 }) {
                             onClick={() => handleCopy(message.content)}
                             title="复制文本"
                         >
-                            {copying ? (
-                                <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>已复制</span>
-                                </>
-                            ) : (
-                                <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                    </svg>
-                                    <span>复制</span>
-                                </>
-                            )}
+                            {copying ? '已复制' : '复制'}
                         </button>
                         <button
                             className="msg-action-btn msg-delete-btn"
@@ -123,10 +99,7 @@ function MessageItem({ message, onDelete, index = 0 }) {
                             disabled={deleting}
                             title="删除"
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
+                            删除
                         </button>
                     </div>
                 </div>
@@ -134,15 +107,12 @@ function MessageItem({ message, onDelete, index = 0 }) {
         )
     }
 
-    // ===== 文件消息 =====
+    // 文件消息
     if (message.type === 'file') {
         const fileType = getFileType(message.fileName)
 
         return (
-            <div 
-                className="msg-card msg-file-card"
-                style={{ animationDelay }}
-            >
+            <div className="msg-card msg-file-card">
                 {/* 图片预览 */}
                 {fileType === 'image' && (
                     <div className="msg-preview msg-image-preview" onClick={() => setPreviewOpen(true)}>
@@ -154,7 +124,6 @@ function MessageItem({ message, onDelete, index = 0 }) {
                                 <line x1="11" y1="8" x2="11" y2="14"></line>
                                 <line x1="8" y1="11" x2="14" y2="11"></line>
                             </svg>
-                            <span>查看大图</span>
                         </div>
                     </div>
                 )}
@@ -162,12 +131,7 @@ function MessageItem({ message, onDelete, index = 0 }) {
                 {/* 视频预览 */}
                 {fileType === 'video' && (
                     <div className="msg-preview msg-video-preview">
-                        <video
-                            src={message.fileUrl}
-                            controls
-                            preload="metadata"
-                            playsInline
-                        >
+                        <video src={message.fileUrl} controls preload="metadata" playsInline>
                             你的浏览器不支持视频播放
                         </video>
                     </div>
@@ -189,17 +153,8 @@ function MessageItem({ message, onDelete, index = 0 }) {
                         <span className="msg-file-name">{message.fileName}</span>
                         <span className="msg-file-size">{formatFileSize(message.fileSize)}</span>
                     </div>
-                    <a
-                        href={message.fileUrl}
-                        className="msg-download-btn"
-                        onClick={handleDownload}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        <span>下载</span>
+                    <a href={message.fileUrl} className="msg-download-btn" onClick={handleDownload}>
+                        下载
                     </a>
                 </div>
 
@@ -211,10 +166,7 @@ function MessageItem({ message, onDelete, index = 0 }) {
                             onClick={() => handleCopy(message.fileUrl)}
                             title="复制链接"
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                            </svg>
+                            复制链接
                         </button>
                         <button
                             className="msg-action-btn msg-delete-btn"
@@ -222,10 +174,7 @@ function MessageItem({ message, onDelete, index = 0 }) {
                             disabled={deleting}
                             title="删除"
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
+                            删除
                         </button>
                     </div>
                 </div>

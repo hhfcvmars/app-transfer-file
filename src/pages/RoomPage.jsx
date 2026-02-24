@@ -21,7 +21,6 @@ function RoomPage() {
     const messagesEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
-    // 加载房间数据
     const fetchRoom = useCallback(async () => {
         try {
             const data = await getRoomData(roomId)
@@ -41,19 +40,16 @@ function RoomPage() {
         }
     }, [roomId, roomNotFound])
 
-    // 初始加载 + 5秒轮询刷新
     useEffect(() => {
         fetchRoom()
         const interval = setInterval(fetchRoom, 5000)
         return () => clearInterval(interval)
     }, [fetchRoom])
 
-    // 自动滚动到底部
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
-    // 发送文本消息
     const handleSendText = async () => {
         const content = textInput.trim()
         if (!content || sending) return
@@ -75,7 +71,6 @@ function RoomPage() {
         }
     }
 
-    // Ctrl/Cmd + Enter 发送
     const handleKeyDown = (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault()
@@ -83,7 +78,6 @@ function RoomPage() {
         }
     }
 
-    // 上传文件
     const handleFileUpload = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -117,7 +111,6 @@ function RoomPage() {
         }
     }
 
-    // 删除消息
     const handleDelete = async (messageId) => {
         try {
             const data = await deleteMessage(roomId, messageId)
@@ -131,7 +124,6 @@ function RoomPage() {
         }
     }
 
-    // 复制房间链接
     const handleCopyLink = async () => {
         const link = `${window.location.origin}/room/${roomId}`
         try {
@@ -148,16 +140,15 @@ function RoomPage() {
         setTimeout(() => setCopied(false), 2000)
     }
 
-    // 房间不存在
     if (roomNotFound) {
         return (
             <div className="room-page">
                 <div className="room-not-found">
                     <div className="not-found-icon">◌</div>
-                    <h2>通道不存在</h2>
-                    <p>该传输通道可能已过期或从未创建</p>
+                    <h2>房间不存在</h2>
+                    <p>该房间可能已过期或从未创建</p>
                     <button className="btn btn-primary" onClick={() => navigate('/')}>
-                        返回终端
+                        返回首页
                     </button>
                 </div>
             </div>
@@ -169,33 +160,23 @@ function RoomPage() {
             {/* 顶部导航 */}
             <header className="room-header">
                 <div className="header-left">
-                    <button className="btn-icon" onClick={() => navigate('/')} title="返回终端">
+                    <button className="btn-icon" onClick={() => navigate('/')} title="返回首页">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" />
                         </svg>
                     </button>
                     <div className="header-room-info">
-                        <span className="header-label">CHANNEL</span>
+                        <span className="header-label">房间</span>
                         <span className="header-room-id">{roomId}</span>
                     </div>
                 </div>
                 <div className="header-right">
                     <button
-                        className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline'}`}
+                        className={`btn btn-sm ${copied ? 'btn-secondary' : 'btn-secondary'}`}
                         onClick={handleCopyLink}
-                        id="copy-link-btn"
+                        style={copied ? { background: '#dcfce7', borderColor: '#86efac', color: '#16a34a' } : {}}
                     >
-                        {copied ? (
-                            <>
-                                <span>◉</span>
-                                <span>已复制</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>◈</span>
-                                <span>复制链接</span>
-                            </>
-                        )}
+                        {copied ? '已复制' : '复制链接'}
                     </button>
                 </div>
             </header>
@@ -204,26 +185,19 @@ function RoomPage() {
             <main className="room-messages">
                 {loading ? (
                     <div className="loading-state">
-                        <div className="spinner-large"></div>
-                        <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                            连接数据流...
-                        </p>
+                        <div className="spinner spinner-dark"></div>
+                        <p>加载中...</p>
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-icon">◌</div>
-                        <h3>等待数据传输</h3>
-                        <p>在下方输入文本或上传文件<br />其他设备接入相同通道即可查看</p>
+                        <h3>暂无内容</h3>
+                        <p>在下方输入文本或上传文件<br />其他设备接入相同房间即可查看</p>
                     </div>
                 ) : (
                     <div className="messages-list">
-                        {messages.map((msg, index) => (
-                            <MessageItem 
-                                key={msg.id} 
-                                message={msg} 
-                                onDelete={handleDelete}
-                                index={index}
-                            />
+                        {messages.map((msg) => (
+                            <MessageItem key={msg.id} message={msg} onDelete={handleDelete} />
                         ))}
                         <div ref={messagesEndRef} />
                     </div>
@@ -236,14 +210,13 @@ function RoomPage() {
                     <div className="progress-track">
                         <div className="progress-fill" style={{ width: `${uploadProgress}%` }}></div>
                     </div>
-                    <span className="progress-text">UPLOADING {uploadProgress}%</span>
+                    <span className="progress-text">{uploadProgress}%</span>
                 </div>
             )}
 
             {/* 错误提示 */}
             {error && !roomNotFound && (
-                <div className="toast toast-error toast-room">
-                    <span>◉</span>
+                <div className="toast toast-error" style={{ bottom: '100px' }}>
                     <span>{error}</span>
                     <button className="toast-close" onClick={() => setError('')}>×</button>
                 </div>
@@ -253,20 +226,16 @@ function RoomPage() {
             <footer className="room-input">
                 <div className="input-row">
                     <textarea
-                        className="input input-message input-glow"
-                        placeholder="输入数据内容... (Ctrl+Enter 发送)"
+                        className="input input-message"
+                        placeholder="输入内容... (Ctrl+Enter 发送)"
                         value={textInput}
                         onChange={(e) => setTextInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={2}
-                        id="text-input"
                     />
                     <div className="input-actions">
-                        <label 
-                            className={`btn-icon btn-upload ${uploading ? 'disabled' : ''}`} 
-                            title="上传文件"
-                        >
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <label className={`btn-icon btn-upload ${uploading ? 'disabled' : ''}`} title="上传文件">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
                             </svg>
                             <input
@@ -275,17 +244,15 @@ function RoomPage() {
                                 hidden
                                 onChange={handleFileUpload}
                                 disabled={uploading}
-                                id="file-input"
                             />
                         </label>
                         <button
-                            className="btn btn-primary btn-send"
+                            className="btn-send"
                             onClick={handleSendText}
                             disabled={!textInput.trim() || sending}
-                            id="send-btn"
                         >
                             {sending ? (
-                                <span className="spinner spinner-light"></span>
+                                <span className="spinner"></span>
                             ) : (
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />

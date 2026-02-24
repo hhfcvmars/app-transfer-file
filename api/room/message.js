@@ -1,5 +1,4 @@
-import crypto from 'crypto';
-import { getRedis, getRoomKey, setCorsHeaders } from '../_utils.js';
+import { getRedis, getRoomKey, setCorsHeaders, generateMessageId } from '../_utils.js';
 
 export default async function handler(req, res) {
     setCorsHeaders(res);
@@ -22,7 +21,7 @@ export default async function handler(req, res) {
 
         // 构建消息对象
         const message = {
-            id: crypto.randomUUID(),
+            id: generateMessageId(),
             type,
             timestamp: Date.now(),
         };
