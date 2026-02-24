@@ -70,7 +70,7 @@ function HomePage() {
                 {/* 品牌标题 */}
                 <header className="brand-header">
                     <h1 className="brand-title">Fasong.xyz</h1>
-                    <p className="brand-subtitle">简单、即时的文件传输</p>
+                    <p className="brand-subtitle">简单、即时的文件发送</p>
                 </header>
 
                 {/* 主操作区 */}
@@ -113,7 +113,7 @@ function HomePage() {
                             onChange={(e) => {
                                 const input = e.target.value.toUpperCase()
                                 let value = ''
-                                
+
                                 // 根据位置限制字符类型
                                 for (let i = 0; i < input.length && i < 4; i++) {
                                     const char = input[i]
@@ -151,9 +151,9 @@ function HomePage() {
                 )}
 
                 {/* 底部说明 */}
-                <footer className="home-footer">
-                    <p>格式: 3位数字 + 1位字母(A-F) · 24小时自动删除</p>
-                </footer>
+                {/* <footer className="home-footer">
+                    <p>文件24小时后自动删除</p>
+                </footer> */}
             </div>
         </div>
     )
