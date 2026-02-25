@@ -4,14 +4,28 @@ const API_BASE = '/api';
 const QINIU_DOMAIN = 'https://img.shuipantech.com';
 const QINIU_UPLOAD_URL = 'https://upload.qiniup.com';
 
+// ===== 设备标识 =====
+const DEVICE_ID_KEY = 'nexus_device_id'
+
+// 获取或生成设备ID
+export const getDeviceId = () => {
+    let deviceId = localStorage.getItem(DEVICE_ID_KEY)
+    if (!deviceId) {
+        deviceId = 'd_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 8)
+        localStorage.setItem(DEVICE_ID_KEY, deviceId)
+    }
+    return deviceId
+}
+
 // ===== 房间 API =====
 
 // 创建房间
 export const createRoom = async () => {
+    const deviceId = getDeviceId()
     const res = await fetch(`${API_BASE}/room/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ deviceId }),
     });
     return res.json();
 };

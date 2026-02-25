@@ -6,6 +6,8 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: '方法不允许' });
 
     try {
+        const { deviceId } = req.body;
+        
         const db = getRedis();
 
         // 生成唯一房间号（最多尝试10次避免碰撞）
@@ -25,12 +27,13 @@ export default async function handler(req, res) {
         const roomData = {
             messages: [],
             createdAt: Date.now(),
+            creatorId: deviceId || null,
         };
 
         // 保存到 Redis，TTL = 24小时
         await db.set(getRoomKey(roomId), JSON.stringify(roomData), { ex: ROOM_TTL });
 
-        return res.status(200).json({ roomId });
+        return res.status(200).json({ roomId, creatorId: deviceId });
     } catch (err) {
         console.error('创建房间失败:', err);
         return res.status(500).json({ error: '服务器错误: ' + err.message });

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
     getRoomData, sendTextMessage, sendFileMessage,
-    deleteMessage, deleteRoom, uploadFile
+    deleteMessage, deleteRoom, uploadFile, getDeviceId
 } from '../utils/api'
 import MessageItem from '../components/MessageItem'
 
@@ -22,6 +22,7 @@ function RoomPage() {
     const [copied, setCopied] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const [isCreator, setIsCreator] = useState(false)
     const messagesEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
@@ -36,6 +37,9 @@ function RoomPage() {
                 return
             }
             setMessages(data.messages || [])
+            // 检查是否是创建者
+            const deviceId = getDeviceId()
+            setIsCreator(data.creatorId === deviceId)
             setError('')
         } catch {
             setError('网络连接失败')
@@ -208,13 +212,15 @@ function RoomPage() {
                     >
                         {copied ? '已复制' : '房间链接'}
                     </button>
-                    <button
-                        className="btn btn-sm btn-delete"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        style={{ marginLeft: '8px', border: '1px solid #fecaca', color: '#dc2626' }}
-                    >
-                        删除通道
-                    </button>
+                    {isCreator && (
+                        <button
+                            className="btn btn-sm btn-delete"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            style={{ marginLeft: '8px', border: '1px solid #fecaca', color: '#dc2626' }}
+                        >
+                            删除通道
+                        </button>
+                    )}
                 </div>
             </header>
 

@@ -19,6 +19,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             messages: data.messages || [],
             createdAt: data.createdAt,
+            creatorId: data.creatorId || null,
         });
     } catch (err) {
         console.error('获取房间数据失败:', err);
