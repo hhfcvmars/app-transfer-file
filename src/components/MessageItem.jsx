@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { formatFileSize, formatTime } from '../utils/api'
 
 // 判断文件类型
@@ -35,6 +36,7 @@ function MessageItem({ message, onDelete }) {
     const [copying, setCopying] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [previewOpen, setPreviewOpen] = useState(false)
+    const [showQRCode, setShowQRCode] = useState(false)
 
     const handleCopy = async (text) => {
         try {
@@ -94,6 +96,13 @@ function MessageItem({ message, onDelete }) {
                             {copying ? '已复制' : '复制'}
                         </button>
                         <button
+                            className="msg-action-btn msg-qrcode-btn"
+                            onClick={() => setShowQRCode(true)}
+                            title="显示二维码"
+                        >
+                            二维码
+                        </button>
+                        <button
                             className="msg-action-btn msg-delete-btn"
                             onClick={handleDelete}
                             disabled={deleting}
@@ -103,6 +112,26 @@ function MessageItem({ message, onDelete }) {
                         </button>
                     </div>
                 </div>
+
+                {showQRCode && (
+                    <div className="modal-overlay" onClick={() => setShowQRCode(false)}>
+                        <div className="modal-content qrcode-modal" onClick={(e) => e.stopPropagation()}>
+                            <h3>文本二维码</h3>
+                            <div className="qrcode-container">
+                                <QRCodeSVG value={message.content} size={200} />
+                            </div>
+                            <p className="qrcode-hint">扫描二维码获取文本内容</p>
+                            <div className="modal-actions">
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setShowQRCode(false)}
+                                >
+                                    关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         )
     }
@@ -169,6 +198,13 @@ function MessageItem({ message, onDelete }) {
                             复制链接
                         </button>
                         <button
+                            className="msg-action-btn msg-qrcode-btn"
+                            onClick={() => setShowQRCode(true)}
+                            title="显示二维码"
+                        >
+                            二维码
+                        </button>
+                        <button
                             className="msg-action-btn msg-delete-btn"
                             onClick={handleDelete}
                             disabled={deleting}
@@ -184,6 +220,28 @@ function MessageItem({ message, onDelete }) {
                     <div className="lightbox" onClick={() => setPreviewOpen(false)}>
                         <button className="lightbox-close" onClick={() => setPreviewOpen(false)}>×</button>
                         <img src={message.fileUrl} alt={message.fileName} onClick={(e) => e.stopPropagation()} />
+                    </div>
+                )}
+
+                {/* 文件下载二维码弹窗 */}
+                {showQRCode && (
+                    <div className="modal-overlay" onClick={() => setShowQRCode(false)}>
+                        <div className="modal-content qrcode-modal" onClick={(e) => e.stopPropagation()}>
+                            <h3>文件下载二维码</h3>
+                            <div className="qrcode-container">
+                                <QRCodeSVG value={message.fileUrl} size={200} />
+                            </div>
+                            <p className="qrcode-filename">{message.fileName}</p>
+                            <p className="qrcode-hint">扫描二维码下载文件</p>
+                            <div className="modal-actions">
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setShowQRCode(false)}
+                                >
+                                    关闭
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
