@@ -439,37 +439,45 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 12px 16px;
   background: #fff;
   border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
+  gap: 8px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .header-room-info {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
 }
 
 .header-label {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .header-room-id {
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 /* 消息区域 */
@@ -560,13 +568,13 @@ body {
 
 /* 文本消息 */
 .msg-text-body {
-  padding: 20px;
+  padding: 16px;
 }
 
 .msg-text-content {
   font-family: var(--font-body);
-  font-size: 0.95rem;
-  line-height: 1.8;
+  font-size: 0.9rem;
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text-primary);
@@ -577,8 +585,8 @@ body {
 .msg-file-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -838,7 +846,7 @@ body {
 
 /* 底部输入 */
 .room-input {
-  padding: 16px 24px;
+  padding: 10px 12px;
   background: #fff;
   border-top: 1px solid var(--border-light);
   flex-shrink: 0;
@@ -847,30 +855,30 @@ body {
 .input-row {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 8px;
   max-width: 800px;
   margin: 0 auto;
 }
 
 .input-message {
   flex: 1;
-  min-height: 44px;
-  max-height: 120px;
-  padding: 12px 16px;
-  font-size: 0.95rem;
+  min-height: 40px;
+  max-height: 100px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
   border-radius: var(--radius-md);
 }
 
 .input-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
-  padding-bottom: 2px;
+  padding-bottom: 1px;
 }
 
 .btn-upload {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
 }
 
 .btn-upload:hover {
@@ -924,15 +932,42 @@ body {
   }
   
   .room-header {
-    padding: 12px 16px;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  
+  .header-left {
+    gap: 8px;
+  }
+  
+  .header-label {
+    display: none;
+  }
+  
+  .header-room-id {
+    font-size: 0.95rem;
   }
   
   .room-messages {
-    padding: 16px;
+    padding: 12px;
   }
   
   .room-input {
-    padding: 12px 16px;
+    padding: 8px 10px;
+  }
+  
+  .input-row {
+    gap: 6px;
+  }
+  
+  .input-message {
+    padding: 8px 12px;
+    min-height: 36px;
+  }
+  
+  .btn-upload, .btn-send {
+    width: 36px;
+    height: 36px;
   }
   
   .msg-image-preview {

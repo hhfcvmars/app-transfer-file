@@ -206,7 +206,7 @@ function RoomPage() {
                         onClick={handleCopyLink}
                         style={copied ? { background: '#dcfce7', borderColor: '#86efac', color: '#16a34a' } : {}}
                     >
-                        {copied ? '已复制' : '复制房间链接'}
+                        {copied ? '已复制' : '房间链接'}
                     </button>
                     <button
                         className="btn btn-sm btn-delete"
