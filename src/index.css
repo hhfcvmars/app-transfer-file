@@ -1074,3 +1074,45 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ===== 拖拽上传 ===== */
+.room-page.dragging {
+  pointer-events: all;
+}
+
+.drag-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.2s ease;
+}
+
+.drag-content {
+  text-align: center;
+  color: #fff;
+}
+
+.drag-content svg {
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.drag-content p {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+/* 拖拽时的输入区域高亮 */
+.room-page.dragging .room-input {
+  border-color: var(--accent);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.room-page.dragging .input-message {
+  border-color: var(--accent);
+  border-style: dashed;
+}

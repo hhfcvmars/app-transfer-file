@@ -23,8 +23,10 @@ function RoomPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [isCreator, setIsCreator] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
     const messagesEndRef = useRef(null)
     const fileInputRef = useRef(null)
+    const dropZoneRef = useRef(null)
 
     const fetchRoom = useCallback(async () => {
         try {
@@ -57,6 +59,70 @@ function RoomPage() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
+    // 拖拽事件处理
+    const handleDragEnter = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(true)
+    }
+
+    const handleDragLeave = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        // 只有离开整个drop zone才重置状态
+        if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget)) {
+            setIsDragging(false)
+        }
+    }
+
+    const handleDragOver = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    const handleDrop = async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+
+        const files = e.dataTransfer?.files
+        if (files && files.length > 0) {
+            await uploadFileFromDrop(files[0])
+        }
+    }
+
+    // 上传拖拽的文件
+    const uploadFileFromDrop = async (file) => {
+        if (!file || uploading) return
+
+        setUploading(true)
+        setUploadProgress(0)
+        setError('')
+
+        try {
+            const fileUrl = await uploadFile(file, (percent) => {
+                setUploadProgress(percent)
+            })
+
+            const msgData = await sendFileMessage(roomId, {
+                fileName: file.name,
+                fileSize: file.size,
+                fileUrl,
+            })
+
+            if (msgData.error) {
+                setError(msgData.error)
+            } else {
+                await fetchRoom()
+            }
+        } catch (err) {
+            setError('文件上传失败: ' + err.message)
+        } finally {
+            setUploading(false)
+            setUploadProgress(0)
+        }
+    }
 
     const handleSendText = async () => {
         const content = textInput.trim()
@@ -190,7 +256,28 @@ function RoomPage() {
     }
 
     return (
-        <div className="room-page">
+        <div 
+            className={`room-page ${isDragging ? 'dragging' : ''}`}
+            ref={dropZoneRef}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
+            {/* 拖拽遮罩层 */}
+            {isDragging && (
+                <div className="drag-overlay">
+                    <div className="drag-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        <p>释放上传文件</p>
+                    </div>
+                </div>
+            )}
+
             {/* 顶部导航 */}
             <header className="room-header">
                 <div className="header-left">
@@ -235,8 +322,8 @@ function RoomPage() {
                     <div className="empty-state">
                         <div className="empty-icon">◌</div>
                         <h3>https://fasong.xyz</h3>
+                        <p>拖拽文件到此处上传</p>
                         <p>其他设备接入相同房间即可查看</p>
-                        <p>数据24小时后销毁</p>
                     </div>
                 ) : (
                     <div className="messages-list">
@@ -276,15 +363,15 @@ function RoomPage() {
                             删除后所有数据将被清除且无法恢复
                         </p>
                         <div className="modal-actions">
-                            <button
-                                className="btn btn-secondary"
+                            <button 
+                                className="btn btn-secondary" 
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={deleting}
                             >
                                 取消
                             </button>
-                            <button
-                                className="btn btn-danger"
+                            <button 
+                                className="btn btn-danger" 
                                 onClick={handleDeleteRoom}
                                 disabled={deleting}
                             >
