@@ -34,6 +34,8 @@ function RoomPage() {
             if (data.error) {
                 if (data.error.includes('不存在') || data.error.includes('过期')) {
                     setRoomNotFound(true)
+                    // 房间不存在或过期时，清除本地存储的房间号
+                    localStorage.removeItem(ROOM_ID_KEY)
                 }
                 if (!roomNotFound) setError(data.error)
                 return
@@ -321,7 +323,14 @@ function RoomPage() {
                 ) : messages.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-icon">◌</div>
-                        <h3>https://fasong.xyz</h3>
+                        <h3>https://fasong.xyz/{roomId}</h3>
+                        <button 
+                            className="btn btn-sm btn-secondary" 
+                            onClick={handleCopyLink}
+                            style={{ marginTop: '8px', marginBottom: '8px' }}
+                        >
+                            {copied ? '已复制' : '复制房间链接'}
+                        </button>
                         <p>拖拽文件到此处上传</p>
                         <p>其他设备接入相同房间即可查看</p>
                     </div>
