@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { formatFileSize, formatTime } from '../utils/api'
 
@@ -30,6 +30,34 @@ const getFileIcon = (fileName) => {
         apk: '📱', ipa: '📱', exe: '⚙️', dmg: '⚙️',
     }
     return iconMap[ext] || '📄'
+}
+
+// 将文本中的 URL 渲染为可点击链接
+const renderTextWithLinks = (text) => {
+    const urlRegex = /https?:\/\/[^\s]+/g
+    const result = []
+    let lastIndex = 0
+    let match
+    while ((match = urlRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            result.push(text.slice(lastIndex, match.index))
+        }
+        result.push(
+            <a
+                key={match.index}
+                href={match[0]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="msg-link"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {match[0]}
+            </a>
+        )
+        lastIndex = match.index + match[0].length
+    }
+    if (lastIndex < text.length) result.push(text.slice(lastIndex))
+    return result
 }
 
 function MessageItem({ message, onDelete }) {
@@ -78,12 +106,25 @@ function MessageItem({ message, onDelete }) {
         setDeleting(false)
     }
 
+    // ESC 键关闭 lightbox 或 QR 弹窗
+    useEffect(() => {
+        if (!previewOpen && !showQRCode) return
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setPreviewOpen(false)
+                setShowQRCode(false)
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [previewOpen, showQRCode])
+
     // 文本消息
     if (message.type === 'text') {
         return (
             <div className="msg-card msg-text-card">
                 <div className="msg-text-body">
-                    <pre className="msg-text-content">{message.content}</pre>
+                    <pre className="msg-text-content">{renderTextWithLinks(message.content)}</pre>
                 </div>
                 <div className="msg-bottom">
                     <span className="msg-time">{formatTime(message.timestamp)}</span>

@@ -162,14 +162,14 @@ export const formatFileSize = (bytes) => {
 export const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const time = `${hours}:${minutes}`;
+    const hh = date.getHours().toString().padStart(2, '0');
+    const mm = date.getMinutes().toString().padStart(2, '0');
+    const time = `${hh}:${mm}`;
 
-    if (date.toDateString() !== now.toDateString()) {
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${month}-${day} ${time}`;
-    }
-    return time;
+    const toDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const diff = toDay(now) - toDay(date);
+
+    if (diff === 0) return time;
+    if (diff === 86400000) return `昨天 ${time}`;
+    return `${date.getMonth() + 1}月${date.getDate()}日 ${time}`;
 };

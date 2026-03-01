@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
 import {
     getRoomData, sendTextMessage, sendFileMessage,
     deleteMessage, deleteRoom, uploadFile, getDeviceId
@@ -24,6 +25,10 @@ function RoomPage() {
     const [deleting, setDeleting] = useState(false)
     const [isCreator, setIsCreator] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
+    const [isPasting, setIsPasting] = useState(false)
+    const [showQrCode, setShowQrCode] = useState(false)
+    const [uploadingFileName, setUploadingFileName] = useState('')
+    const [connectionStatus, setConnectionStatus] = useState('ok') // 'ok' | 'error'
     const messagesEndRef = useRef(null)
     const fileInputRef = useRef(null)
     const dropZoneRef = useRef(null)
@@ -34,18 +39,18 @@ function RoomPage() {
             if (data.error) {
                 if (data.error.includes('不存在') || data.error.includes('过期')) {
                     setRoomNotFound(true)
-                    // 房间不存在或过期时，清除本地存储的房间号
                     localStorage.removeItem(ROOM_ID_KEY)
                 }
                 if (!roomNotFound) setError(data.error)
                 return
             }
             setMessages(data.messages || [])
-            // 检查是否是创建者
             const deviceId = getDeviceId()
             setIsCreator(data.creatorId === deviceId)
             setError('')
+            setConnectionStatus('ok')
         } catch {
+            setConnectionStatus('error')
             setError('网络连接失败')
         } finally {
             setLoading(false)
@@ -54,13 +59,101 @@ function RoomPage() {
 
     useEffect(() => {
         fetchRoom()
-        const interval = setInterval(fetchRoom, 5000)
-        return () => clearInterval(interval)
+        let interval = setInterval(fetchRoom, 5000)
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchRoom()
+                interval = setInterval(fetchRoom, 5000)
+            } else {
+                clearInterval(interval)
+            }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        return () => {
+            clearInterval(interval)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
     }, [fetchRoom])
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
+    // 通用文件上传逻辑（单文件）
+    const doUpload = useCallback(async (file) => {
+        if (!file || uploading) return
+
+        setUploading(true)
+        setUploadProgress(0)
+        setUploadingFileName(file.name)
+        setError('')
+
+        try {
+            const fileUrl = await uploadFile(file, (percent) => {
+                setUploadProgress(percent)
+            })
+
+            const msgData = await sendFileMessage(roomId, {
+                fileName: file.name,
+                fileSize: file.size,
+                fileUrl,
+            })
+
+            if (msgData.error) {
+                setError(msgData.error)
+            } else {
+                await fetchRoom()
+            }
+        } catch (err) {
+            setError('文件上传失败: ' + err.message)
+        } finally {
+            setUploading(false)
+            setUploadProgress(0)
+            setUploadingFileName('')
+        }
+    }, [uploading, roomId, fetchRoom])
+
+    // 批量上传（顺序处理多个文件）
+    const doUploadFiles = useCallback(async (files) => {
+        for (const file of files) {
+            await doUpload(file)
+        }
+    }, [doUpload])
+
+    // 粘贴事件处理（支持截图和文件）
+    const handlePaste = useCallback(async (e) => {
+        const items = e.clipboardData?.items
+        if (!items) return
+
+        const fileItems = Array.from(items).filter(item => item.kind === 'file')
+        if (fileItems.length === 0) return
+
+        e.preventDefault()
+
+        const filesToUpload = fileItems.map((item, i) => {
+            const file = item.getAsFile()
+            if (!file) return null
+            if (!file.name || file.name === 'image.png') {
+                const ext = file.type.split('/')[1] || 'png'
+                const prefix = file.type.startsWith('image/') ? 'screenshot' : 'paste'
+                return new File([file], `${prefix}-${Date.now() + i}.${ext}`, { type: file.type })
+            }
+            return file
+        }).filter(Boolean)
+
+        if (filesToUpload.length === 0 || uploading) return
+
+        setIsPasting(true)
+        await doUploadFiles(filesToUpload)
+        setIsPasting(false)
+    }, [uploading, doUploadFiles])
+
+    useEffect(() => {
+        window.addEventListener('paste', handlePaste)
+        return () => window.removeEventListener('paste', handlePaste)
+    }, [handlePaste])
 
     // 拖拽事件处理
     const handleDragEnter = (e) => {
@@ -90,39 +183,7 @@ function RoomPage() {
 
         const files = e.dataTransfer?.files
         if (files && files.length > 0) {
-            await uploadFileFromDrop(files[0])
-        }
-    }
-
-    // 上传拖拽的文件
-    const uploadFileFromDrop = async (file) => {
-        if (!file || uploading) return
-
-        setUploading(true)
-        setUploadProgress(0)
-        setError('')
-
-        try {
-            const fileUrl = await uploadFile(file, (percent) => {
-                setUploadProgress(percent)
-            })
-
-            const msgData = await sendFileMessage(roomId, {
-                fileName: file.name,
-                fileSize: file.size,
-                fileUrl,
-            })
-
-            if (msgData.error) {
-                setError(msgData.error)
-            } else {
-                await fetchRoom()
-            }
-        } catch (err) {
-            setError('文件上传失败: ' + err.message)
-        } finally {
-            setUploading(false)
-            setUploadProgress(0)
+            await doUploadFiles(Array.from(files))
         }
     }
 
@@ -155,36 +216,10 @@ function RoomPage() {
     }
 
     const handleFileUpload = async (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        setUploading(true)
-        setUploadProgress(0)
-        setError('')
-
-        try {
-            const fileUrl = await uploadFile(file, (percent) => {
-                setUploadProgress(percent)
-            })
-
-            const msgData = await sendFileMessage(roomId, {
-                fileName: file.name,
-                fileSize: file.size,
-                fileUrl,
-            })
-
-            if (msgData.error) {
-                setError(msgData.error)
-            } else {
-                await fetchRoom()
-            }
-        } catch (err) {
-            setError('文件上传失败: ' + err.message)
-        } finally {
-            setUploading(false)
-            setUploadProgress(0)
-            if (fileInputRef.current) fileInputRef.current.value = ''
-        }
+        const files = Array.from(e.target.files || [])
+        if (files.length === 0) return
+        await doUploadFiles(files)
+        if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
     const handleDelete = async (messageId) => {
@@ -280,6 +315,19 @@ function RoomPage() {
                 </div>
             )}
 
+            {/* 粘贴上传遮罩层 */}
+            {isPasting && (
+                <div className="drag-overlay">
+                    <div className="drag-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        <p>正在上传粘贴内容...</p>
+                    </div>
+                </div>
+            )}
+
             {/* 顶部导航 */}
             <header className="room-header">
                 <div className="header-left">
@@ -291,9 +339,28 @@ function RoomPage() {
                     <div className="header-room-info">
                         <span className="header-label">房间</span>
                         <span className="header-room-id">{roomId}</span>
+                        <span
+                            className={`connection-dot ${connectionStatus === 'error' ? 'connection-dot-error' : 'connection-dot-ok'}`}
+                            title={connectionStatus === 'error' ? '连接断开' : '连接正常'}
+                        />
                     </div>
                 </div>
                 <div className="header-right">
+                    <button
+                        className="btn-icon msg-qrcode-btn"
+                        onClick={() => setShowQrCode(true)}
+                        title="查看房间二维码"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="3" height="3" />
+                            <rect x="18" y="14" width="3" height="3" />
+                            <rect x="14" y="18" width="3" height="3" />
+                            <rect x="18" y="18" width="3" height="3" />
+                        </svg>
+                    </button>
                     <button
                         className={`btn btn-sm ${copied ? 'btn-secondary' : 'btn-secondary'}`}
                         onClick={handleCopyLink}
@@ -322,17 +389,23 @@ function RoomPage() {
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-icon">◌</div>
-                        <h3>https://fasong.xyz/{roomId}</h3>
-                        <button 
-                            className="btn btn-sm btn-secondary" 
+                        <div className="empty-qrcode" onClick={() => setShowQrCode(true)} title="点击查看大图">
+                            <QRCodeSVG
+                                value={`${window.location.origin}/${roomId}`}
+                                size={120}
+                                level="M"
+                            />
+                        </div>
+                        <h3 className="empty-url">fasong.xyz/{roomId}</h3>
+                        <button
+                            className="btn btn-sm btn-secondary"
                             onClick={handleCopyLink}
-                            style={{ marginTop: '8px', marginBottom: '8px' }}
+                            style={{ marginBottom: '12px' }}
                         >
                             {copied ? '已复制' : '复制房间链接'}
                         </button>
-                        <p>拖拽文件到此处上传</p>
-                        <p>其他设备接入相同房间即可查看</p>
+                        <p>拖拽、粘贴文件或截图即可上传</p>
+                        <p>手机扫码或其他设备接入相同房间即可查看</p>
                     </div>
                 ) : (
                     <div className="messages-list">
@@ -347,6 +420,9 @@ function RoomPage() {
             {/* 上传进度条 */}
             {uploading && (
                 <div className="upload-progress-bar">
+                    {uploadingFileName && (
+                        <span className="progress-filename">{uploadingFileName}</span>
+                    )}
                     <div className="progress-track">
                         <div className="progress-fill" style={{ width: `${uploadProgress}%` }}></div>
                     </div>
@@ -359,6 +435,32 @@ function RoomPage() {
                 <div className="toast toast-error" style={{ bottom: '100px' }}>
                     <span>{error}</span>
                     <button className="toast-close" onClick={() => setError('')}>×</button>
+                </div>
+            )}
+
+            {/* 二维码弹窗 */}
+            {showQrCode && (
+                <div className="modal-overlay" onClick={() => setShowQrCode(false)}>
+                    <div className="modal-content qrcode-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>扫码加入房间</h3>
+                        <div className="qrcode-container">
+                            <QRCodeSVG
+                                value={`${window.location.origin}/${roomId}`}
+                                size={200}
+                                level="M"
+                            />
+                        </div>
+                        <p className="qrcode-filename">{window.location.origin}/{roomId}</p>
+                        <p className="qrcode-hint">用手机扫描二维码即可加入同一房间</p>
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary" onClick={handleCopyLink}>
+                                {copied ? '已复制链接' : '复制链接'}
+                            </button>
+                            <button className="btn btn-primary" onClick={() => setShowQrCode(false)}>
+                                关闭
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -396,7 +498,7 @@ function RoomPage() {
                 <div className="input-row">
                     <textarea
                         className="input input-message"
-                        placeholder="输入内容... (Ctrl+Enter 发送)"
+                        placeholder="输入内容... (Ctrl+Enter 发送，可直接粘贴文件或截图)"
                         value={textInput}
                         onChange={(e) => setTextInput(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -411,6 +513,7 @@ function RoomPage() {
                                 ref={fileInputRef}
                                 type="file"
                                 hidden
+                                multiple
                                 onChange={handleFileUpload}
                                 disabled={uploading}
                             />
